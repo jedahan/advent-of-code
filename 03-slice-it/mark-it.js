@@ -57,12 +57,10 @@ const reduce = ({input}) => {
     }
   }
 
-  console.log(`Filtering ${fabric.length} values`)
-  // print({fabric, width})
-  console.dir(clean)
-
-  return Object.keys(fabric)
-    .reduce((sum, index) => sum + (fabric[index] === 'x' ? 1 : 0), 0)
+  return {
+    clean: Array.from(clean)[0],
+    overlapping: Object.keys(fabric).reduce((sum, index) => sum + (fabric[index] === 'x' ? 1 : 0), 0)
+  }
 }
 
 read('input').then(reduce).then(console.log)
