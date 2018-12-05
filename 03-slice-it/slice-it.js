@@ -1,6 +1,7 @@
 const fs = require('fs')
 const { promisify } = require('util')
 const readFile = promisify(fs.readFile)
+const util = require('util')
 
 const read = async filename => {
   const bytes = await readFile(filename)
@@ -10,43 +11,53 @@ const read = async filename => {
 }
 
 const parse = cut => {
-  let [_, x, y, w, h, ..._r] = cut.match(/[\d+]\ @\ (\d+),(\d+): (\d+)x(\d+).*/)
-  return [x, y, w, h]
+  let [_, i, x, y, w, h, ..._r] = cut.match(/^#(\d+)\ @\ (\d+),(\d+): (\d+)x(\d+).*/)
+  return [i, x, y, w, h].map(parseFloat)
 }
 
 // Gets the maximum length and width
 const size = ({input}) => {
-  const [l, w] = input.reduce(([ml, mw], cut) => {
-    let [x, y, w, h] = parse(cut)
-    if (x+w > ml) mw = x+w
-    if (y+h > mw) ml = y+h
-    return [ml, mw]
-  }, input[0])
-  return {l, w}
+  const [width, height] = input.reduce(([mw, mh], cut) => {
+    let [_, x, y, w, h] = parse(cut)
+    if (x+w > mw) mw = x+w
+    if (y+h > mh) mh = y+h
+    return [mw, mh]
+  }, [-Infinity, -Infinity])
+  return {width, height}
+}
+
+const print = ({fabric, width}) => {
+  for (let i=0; i < fabric.length; i++) {
+    if (i % width === 0) console.log()
+    process.stdout.write(util.format('%s', fabric[i] || '.'))
+  }
+  console.log()
 }
 
 const reduce = ({input}) => {
-  const {l, w} = size({input})
-  const fabric = new Array(l * w)
+  const {width, height} = size({input})
+  const fabric = new Array(width * height)
 
   for (cut of input) {
-    let [x, y, w, h] = parse(cut)
+    let [i, x, y, w, h] = parse(cut)
     for (let yo = 0; yo < h; yo++) {
       for (let xo = 0; xo < w; xo++) {
-        const index = ((y + yo) * w) + (x + xo)
+        const index = ((y + yo) * width) + (x + xo)
 
         if (fabric[index] === undefined)
-          fabric[index] = false
+          fabric[index] = i
         else
-          fabric[index] = true
+          fabric[index] = 'x'
+
       }
     }
   }
 
   console.log(`Filtering ${fabric.length} values`)
+  // print({fabric, width})
 
   return Object.keys(fabric)
-    .reduce((sum, index) => sum + (fabric[index] ? 1 : 0), 0)
+    .reduce((sum, index) => sum + (fabric[index] === 'x' ? 1 : 0), 0)
 }
 
 read('input').then(reduce).then(console.log)
