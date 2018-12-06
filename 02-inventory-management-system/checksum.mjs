@@ -1,13 +1,4 @@
-const fs = require('fs')
-const { promisify } = require('util')
-const readFile = promisify(fs.readFile)
-
-const read = async filename => {
-  const bytes = await readFile(filename)
-  const input = bytes.toString().split('\n')
-  input.pop() // deal with extra newline
-  return { input }
-}
+import read from '../read'
 
 const has = what => counts => counts.includes(what) ? 1 : 0
 const checksums = [has(2), has(3)]

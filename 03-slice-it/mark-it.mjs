@@ -1,14 +1,4 @@
-const fs = require('fs')
-const { promisify } = require('util')
-const readFile = promisify(fs.readFile)
-const util = require('util')
-
-const read = async filename => {
-  const bytes = await readFile(filename)
-  const input = bytes.toString().split('\n')
-  input.pop() // deal with extra newline
-  return { input }
-}
+import read from '../read'
 
 const parse = cut => {
   let [_, i, x, y, w, h, ..._r] = cut.match(/^#(\d+)\ @\ (\d+),(\d+): (\d+)x(\d+).*/)
@@ -37,27 +27,30 @@ const print = ({fabric, width}) => {
 const reduce = ({input}) => {
   const {width, height} = size({input})
   const fabric = new Array(width * height)
+  const clean = new Set()
 
   for (cut of input) {
     let [i, x, y, w, h] = parse(cut)
+    clean.add(i)
     for (let yo = 0; yo < h; yo++) {
       for (let xo = 0; xo < w; xo++) {
         const index = ((y + yo) * width) + (x + xo)
 
-        if (fabric[index] === undefined)
+        if (fabric[index] === undefined) {
           fabric[index] = i
-        else
+        } else {
+          clean.delete(fabric[index])
           fabric[index] = 'x'
-
+          clean.delete(i)
+        }
       }
     }
   }
 
-  console.log(`Filtering ${fabric.length} values`)
-  // print({fabric, width})
-
-  return Object.keys(fabric)
-    .reduce((sum, index) => sum + (fabric[index] === 'x' ? 1 : 0), 0)
+  return {
+    clean: Array.from(clean)[0],
+    overlapping: Object.keys(fabric).reduce((sum, index) => sum + (fabric[index] === 'x' ? 1 : 0), 0)
+  }
 }
 
 read('input').then(reduce).then(console.log)

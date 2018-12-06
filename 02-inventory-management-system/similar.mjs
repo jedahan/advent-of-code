@@ -1,13 +1,4 @@
-const fs = require('fs')
-const { promisify } = require('util')
-const readFile = promisify(fs.readFile)
-
-const read = async filename => {
-  const bytes = await readFile(filename)
-  const input = bytes.toString().split('\n')
-  input.pop() // deal with extra newline
-  return { input }
-}
+import read from '../read'
 
 const reduce = ({input}) => {
   return input.sort().some((first, i) => {
